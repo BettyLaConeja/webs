@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Altaweb</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        textarea, input, button {
+            background-color: black;
+            color: white;
+            border: 2px solid white;
+            font-size: 1em;
+            padding: 0.5em;
+        }
+        button {
+            font-weight: bold;
+        }
+        h1, label {
+            color: white;
+        }
+        button:hover {
+            background-color: white;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Introduce tu texto aquí</h1>
+    
+    <button type="button" onclick="window.location.href='https://ingreso.ceibal.edu.uy/loginunico/username.xhtml?service=https%3A%2F%2Fceibalsso.schoology.com%2F%3F%26domain%3Dceibal.schoology.com%26timestamp%3D1717457757'">Ir a CREA</button><br><br>
+
+    <form>
+        <label for="textbox1">Texto 1:</label><br>
+        <textarea id="textbox1" name="textbox1" rows="10" cols="80"></textarea><br>
+        <button type="button" onclick="leerTexto('textbox1')">Leer en Voz Alta</button><br><br>
+        
+        <h1>Compartir</h1>
+        
+        <label for="textbox2">Texto 2:</label><br>
+        <textarea id="textbox2" name="textbox2" rows="10" cols="80"></textarea><br>
+        <button type="button" onclick="reconocerVoz()">Escribir lo que hablas</button><br><br>
+        
+        <button type="button" onclick="compartirPorWhatsApp()">Compartir por WhatsApp</button>
+        <button type="button" onclick="compartirPorCorreo()">Compartir por Correo Electrónico</button>
+        <button type="button" onclick="copiarAlPortapapeles()">Copiar para CREA</button>
+    </form>
+
+    <script>
+        let vocesDisponibles = [];
+
+        function cargarVoces() {
+            vocesDisponibles = window.speechSynthesis.getVoices();
+        }
+
+        function leerTexto(id) {
+            const texto = document.getElementById(id).value;
+            const speech = new SpeechSynthesisUtterance(texto);
+
+            const vozEspañol = vocesDisponibles.find(voz => voz.lang.startsWith('es'));
+
+            if (vozEspañol) {
+                speech.voice = vozEspañol;
+            } else {
+                speech.lang = 'es-ES';
+            }
+
+            window.speechSynthesis.speak(speech);
+        }
+
+        function reconocerVoz() {
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = 'es-ES';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onstart = function() {
+                    console.log('Reconocimiento de voz iniciado');
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Error en el reconocimiento de voz:', event.error);
+                };
+
+                recognition.onresult = function(event) {
+                    const resultado = event.results[0][0].transcript;
+                    document.getElementById('textbox2').value = resultado;
+                };
+
+                recognition.onend = function() {
+                    console.log('Reconocimiento de voz finalizado');
+                };
+
+                recognition.start();
+            } else {
+                alert('Tu navegador no soporta el reconocimiento de voz.');
+            }
+        }
+
+        function compartirPorWhatsApp() {
+            const texto = document.getElementById('textbox2').value;
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
+        }
+
+        function compartirPorCorreo() {
+            const texto = document.getElementById('textbox2').value;
+            const asunto = 'Texto Reconocido por Voz';
+            const url = `mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(texto)}`;
+            window.open(url, '_self');
+        }
+
+        function copiarAlPortapapeles() {
+            const texto = document.getElementById('textbox2').value;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('Texto copiado al portapapeles. Ahora puedes pegarlo en CREA.');
+            }).catch(err => {
+                alert('Error al copiar el texto: ' + err);
+            });
+        }
+
+        window.speechSynthesis.onvoiceschanged = cargarVoces;
+        cargarVoces();
+    </script>
+</body>
+</html>
