@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALTAWEB</title>
+    <style>
+        body {
+            background-color: #4B4B4B; /* gris oscuro */
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        textarea, input, button {
+            background-color: black;
+            color: white;
+            border: 2px solid white;
+            font-size: 1em;
+            padding: 0.5em;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            font-weight: bold;
+            cursor: pointer;
+        }
+        h1, label {
+            color: white;
+            font-size: 1.5em;
+        }
+        button:hover {
+            background-color: white;
+            color: black;
+        }
+        
+        /* Estilo para fondo gris */
+        .grey-background {
+            background-color: #f0f0f0; /* gris claro */
+        }
+    </style>
+</head>
+<body>
+    <h1> </h1>
+    
+    <!-- Botón para ir a CREA -->
+    <button type="button" onclick="irACREA()">Ir a CREA</button><br><br>
+
+    <form>
+        <!-- Área para ingresar problemas o ejercicios -->
+        <label for="problema">Consigna de trabajo:</label><br>
+        <textarea id="problema" name="problema" rows="5" cols="80"></textarea><br>
+        
+        <!-- Botón para leer en voz alta el problema -->
+        <button type="button" onclick="leerTexto('problema')">Leer en Voz Alta</button><br><br>
+        
+        <h2>Respuestas y Compartir</h2>
+        
+        <!-- Área para ingresar la solución o respuesta -->
+        <label for="respuesta">Solución o Respuesta:</label><br>
+        <textarea id="respuesta" name="respuesta" rows="5" cols="80"></textarea><br>
+        
+        <!-- Botón para reconocimiento de voz para solución -->
+        <button type="button" onclick="reconocerVoz('respuesta')">Escribir lo que hablas</button>
+        
+        <!-- Botón para leer en voz alta la respuesta -->
+        <button type="button" onclick="leerTexto('respuesta')">Leer mi respuesta en voz alta</button><br><br>
+        
+        <!-- Botones para compartir -->
+        <button type="button" onclick="compartirPorWhatsApp()">Compartir por WhatsApp</button>
+        <button type="button" onclick="compartirPorCorreo()">Compartir por Correo Electrónico</button>
+        <button type="button" onclick="copiarAlPortapapeles()">Copiar para CREA</button>
+    </form>
+
+    <!-- Botón para cambiar a fondo gris -->
+    <button type="button" onclick="cambiarFondoGris()">Cambiar a fondo gris</button>
+
+    <script>
+        let vocesDisponibles = [];
+
+        function cargarVoces() {
+            vocesDisponibles = window.speechSynthesis.getVoices();
+        }
+
+        function leerTexto(id) {
+            const texto = document.getElementById(id).value;
+            const speech = new SpeechSynthesisUtterance(texto);
+
+            const vozEspañol = vocesDisponibles.find(voz => voz.lang.startsWith('es'));
+
+            if (vozEspañol) {
+                speech.voice = vozEspañol;
+            } else {
+                speech.lang = 'es-ES';
+            }
+
+            window.speechSynthesis.speak(speech);
+        }
+
+        function reconocerVoz(id) {
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = 'es-ES';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onstart = function() {
+                    console.log('Reconocimiento de voz iniciado');
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Error en el reconocimiento de voz:', event.error);
+                };
+
+                recognition.onresult = function(event) {
+                    const resultado = event.results[0][0].transcript;
+                    document.getElementById(id).value = resultado;
+                };
+
+                recognition.onend = function() {
+                    console.log('Reconocimiento de voz finalizado');
+                };
+
+                recognition.start();
+            } else {
+                alert('Tu navegador no soporta el reconocimiento de voz.');
+            }
+        }
+
+        function compartirPorWhatsApp() {
+            const texto = document.getElementById('respuesta').value;
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
+        }
+
+        function compartirPorCorreo() {
+            const texto = document.getElementById('respuesta').value;
+            const asunto = 'Respuesta a Problema de Matemáticas';
+            const url = `mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(texto)}`;
+            window.open(url, '_self');
+        }
+
+        function copiarAlPortapapeles() {
+            const texto = document.getElementById('respuesta').value;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('Texto copiado al portapapeles. Ahora puedes pegarlo en CREA.');
+            }).catch(err => {
+                alert('Error al copiar el texto: ' + err);
+            });
+        }
+
+        function irACREA() {
+            window.open('https://ingreso.ceibal.edu.uy/loginunico/username.xhtml?service=https%3A%2F%2Fceibalsso.schoology.com%2F%3F%26domain%3Dceibal.schoology.com%26timestamp%3D1717457757', '_blank');
+        }
+
+        // Función para cambiar el fondo a gris
+        function cambiarFondoGris() {
+            document.body.classList.toggle('grey-background');
+        }
+
+        window.speechSynthesis.onvoiceschanged = cargarVoces;
+        cargarVoces();
+    </script>
+</body>
+</html>
